@@ -15,7 +15,7 @@ services:
     restart: unless-stopped
 #
   heimdall:
-    image: lscr.io/linuxserver/heimdall:${VHEIMDALL}
+    image: lscr.io/linuxserver/heimdall:latest
     container_name: heimdall
     environment:
       - PUID=${PUID}
