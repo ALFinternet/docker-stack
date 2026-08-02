@@ -1,0 +1,162 @@
+# how to pass networking through containers/services
+# https://john.muchovej.com/thoughts/setting-up-liso-wireguard/
+#
+
+services:
+  privoxyvpn:
+    image: ghcr.io/binhex/arch-privoxyvpn:latest
+    container_name: privoxyvpn
+    # cap_add needed for OpenVPN?
+    cap_add:
+        - NET_ADMIN
+        # SYS_MODULE might not be needed with a 5.6+ kernel?
+        #- SYS_MODULE
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - VPN_ENABLED=yes
+      - VPN_USER=${VPNUSER}
+      - VPN_PASS=${VPNPASS}
+      - VPN_PROV=${VPNPROV} #custom
+      - VPN_CLIENT=${VPNCLIENT} #openvpn
+      - VPN_OUTPUT_PORTS=
+      - VPN_OPTIONS=
+      - VPN_INPUT_PORTS=6881,7878,8112,8989,9117,51413,9091
+      - SOCKS_USER=${SOCKSUSER}
+      - SOCKS_PASS=${SOCKSPASS}
+      - NAME_SERVERS=${VPNNAMESERVERS} #10.255.255.1,1.1.1.1,1.0.0.1
+      - LAN_NETWORK=${VPNLANNETWORK} #10.0.0.0/8,172.16.0.0/12,192.168.0.0/16
+      - ENABLE_SOCKS=${VPNENABLESOCKS} #yes
+      - ENABLE_PRIVOXY=${VPNENABLEPRIVOXY} #yes
+      - DEBUG=${VPNDEBUG} #false
+    volumes:
+      - ${APPDATA}downloaders/privoxyvpn:/config
+    ports:
+      - 8118:8118 # privoxy
+      - 9118:9118 # microsocks
+      - 6881:6881 # deluge torrents
+      - 6881:6881/udp # deluge torrents
+      - 9091:9091 # transmission UI
+      - 51413:51413 # transmission Download TCP
+      - 51413:51413/udp # transmission Download UDP
+      - 7878:7878 # radarr
+      - 8112:8112 # deluge UI
+      - 8989:8989 # sonarr
+      - 9117:9117 # jackett
+      - 3001:3000 # webtop2
+    privileged: true
+    sysctls:
+        # wg-quick fails to set this without --privileged, so set it here instead if needed
+        - net.ipv4.conf.all.src_valid_mark=1
+        # May as well disable ipv6. Should be blocked anyway.
+        - net.ipv6.conf.default.disable_ipv6=1
+        - net.ipv6.conf.all.disable_ipv6=1
+        - net.ipv6.conf.lo.disable_ipv6=1
+    networks:
+      - outsidelink
+    restart: unless-stopped
+#
+  transmission:
+    image: lscr.io/linuxserver/transmission:latest
+    container_name: transmission
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - TRANSMISSION_WEB_HOME= #optional
+      - USER= #optional
+      - PASS= #optional
+      - WHITELIST= #optional
+      - PEERPORT= #optional
+      - HOST_WHITELIST= #optional
+    volumes:
+      - ${APPDATA}downloaders/transmission:/config
+      - ${DLVOL}:/downloads
+      - ${DLVOL}intake:/watch
+    #ports:
+      #- 9091:9091 # webUI
+      #- 51413:51413 # Download TCP
+      #- 51413:51413/udp # Download UDP
+    restart: unless-stopped
+    network_mode: "service:privoxyvpn"
+    depends_on: [ "privoxyvpn", ]
+#
+  deluge:
+    image: lscr.io/linuxserver/deluge:latest
+    container_name: deluge
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - DELUGE_LOGLEVEL=error #optional
+    volumes:
+      - ${APPDATA}downloaders/deluge:/config
+      - ${DLVOL}:/downloads
+    #ports:
+      #- 8112:8112
+      #- 6881:6881
+      #- 6881:6881/udp
+    restart: unless-stopped
+    network_mode: "service:privoxyvpn"
+    depends_on: [ "privoxyvpn", ]
+#
+  radarr:
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: radarr
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - ${APPDATA}downloaders/radarr:/config
+      - ${MEDIAVOL}Movies:/movies #optional
+      - ${DLVOL}:/downloads #optional
+    #ports:
+      #- 7878:7878
+    restart: unless-stopped
+    network_mode: "service:privoxyvpn"
+    depends_on: [ "privoxyvpn", ]
+#
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:latest
+    container_name: sonarr
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - ${APPDATA}downloaders/sonarr:/config
+      - ${MEDIAVOL}TV Shows:/mediavol_tv #optional
+      - ${DLVOL}:/downloads #optional
+    #ports:
+      #- 8989:8989
+    restart: unless-stopped
+    network_mode: "service:privoxyvpn"
+    depends_on: [ "privoxyvpn", ]
+#
+  jackett:
+    image: lscr.io/linuxserver/jackett:latest
+    container_name: jackett
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - AUTO_UPDATE=true #optional
+      - RUN_OPTS= #optional
+    volumes:
+      - ${APPDATA}downloaders/jackett:/config
+      - ${DLVOL}:/downloads #optional
+    #ports:
+      #- 9117:9117
+    restart: unless-stopped
+    network_mode: "service:privoxyvpn"
+    depends_on: [ "privoxyvpn", ]
+#
+#
+#
+#
+networks:
+  outsidelink:
+    external: true
+    name: ${CONNET}
