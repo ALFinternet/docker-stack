@@ -31,7 +31,7 @@ services:
       - ENABLE_PRIVOXY=${VPNENABLEPRIVOXY} #yes
       - DEBUG=${VPNDEBUG} #false
     volumes:
-      - ${APPDATA}downloaders/privoxyvpn:/config
+      - ${APPDATA}/downloaders/privoxyvpn:/config
     ports:
       - 8118:8118 # privoxy
       - 9118:9118 # microsocks
@@ -71,7 +71,7 @@ services:
       - PEERPORT= #optional
       - HOST_WHITELIST= #optional
     volumes:
-      - ${APPDATA}downloaders/transmission:/config
+      - ${APPDATA}/downloaders/transmission:/config
       - ${DLVOL}:/downloads
       - ${DLVOL}intake:/watch
     #ports:
@@ -91,7 +91,7 @@ services:
       - TZ=${TZ}
       - DELUGE_LOGLEVEL=error #optional
     volumes:
-      - ${APPDATA}downloaders/deluge:/config
+      - ${APPDATA}/downloaders/deluge:/config
       - ${DLVOL}:/downloads
     #ports:
       #- 8112:8112
@@ -109,7 +109,7 @@ services:
       - PGID=${PGID}
       - TZ=${TZ}
     volumes:
-      - ${APPDATA}downloaders/radarr:/config
+      - ${APPDATA}/downloaders/radarr:/config
       - ${MEDIAVOL}Movies:/movies #optional
       - ${DLVOL}:/downloads #optional
     #ports:
@@ -126,7 +126,7 @@ services:
       - PGID=${PGID}
       - TZ=${TZ}
     volumes:
-      - ${APPDATA}downloaders/sonarr:/config
+      - ${APPDATA}/downloaders/sonarr:/config
       - ${MEDIAVOL}TV Shows:/mediavol_tv #optional
       - ${DLVOL}:/downloads #optional
     #ports:
@@ -145,7 +145,7 @@ services:
       - AUTO_UPDATE=true #optional
       - RUN_OPTS= #optional
     volumes:
-      - ${APPDATA}downloaders/jackett:/config
+      - ${APPDATA}/downloaders/jackett:/config
       - ${DLVOL}:/downloads #optional
     #ports:
       #- 9117:9117
