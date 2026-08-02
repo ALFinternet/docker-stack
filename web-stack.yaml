@@ -1,0 +1,52 @@
+services:
+#
+  nginx:
+    image: lscr.io/linuxserver/nginx:latest
+    container_name: nginx
+    volumes:
+      - ${APPDATA}/webstack/nginx:/config
+    restart: unless-stopped
+#
+  db:
+    image: lscr.io/linuxserver/mariadb:latest
+    container_name: mariadb
+    volumes:
+      - ${APPDATA}/webstack/mariadb:/config
+    restart: unless-stopped
+#
+  heimdall:
+    image: lscr.io/linuxserver/heimdall:${VHEIMDALL}
+    container_name: heimdall
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - ${APPDATA}/webstack/heimdall:/config
+    restart: unless-stopped
+#
+  phpmyadmin:
+    image: lscr.io/linuxserver/phpmyadmin:latest
+    container_name: phpmyadmin
+    environment:
+      - PMA_ARBITRARY=1 #optional
+    volumes:
+      - ${APPDATA}/webstack/phpmyadmin:/config
+    restart: unless-stopped
+#
+  adminer:
+    image: adminer:latest
+    container_name: adminer
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - DOCKER_MODS=linuxserver/mods:swag-imagemagick|linuxserver/mods:universal-cron
+    volumes:
+      - ${APPDATA}/webstack/adminer:/config
+    restart: unless-stopped
+#
+networks:
+  default:
+    name: ${CONNET}
+    external: true
