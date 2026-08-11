@@ -1,6 +1,10 @@
 # how to pass networking through containers/services
 # https://john.muchovej.com/thoughts/setting-up-liso-wireguard/
+# or
+# https://cyberpanel.net/blog/gluetun-docker
 #
+# curl https://checkip.amazonaws.com
+
 
 services:
   privoxyvpn:
